@@ -33,6 +33,7 @@ def main():
     btree = BTree(ordem)
     btree.load_from_file()  # Carrega os dados do arquivo ao iniciar o programa
 
+    # Dicionário para armazenar os tempos de execução das operações
     tempos_execucao = {
         "inserir": [],
         "buscar": [],
@@ -53,7 +54,6 @@ def main():
             "6. Sair"
         ]
 
-        # Utilizando for para exibir as opções do menu
         for opcao in opcoes:
             print(opcao)
         
@@ -121,7 +121,7 @@ def main():
             print("\nRelatório de Desempenho:")
             for operacao, tempos in tempos_execucao.items():
                 if tempos:
-                    media_tempo = sum(tempos) / len(tempos)
+                    media_tempo = sum(tempos) / len(tempos)  # Calcula o tempo médio de execução para cada operação
                     print(f"Tempo médio para {operacao}: {media_tempo:.6f} ms")
                 else:
                     print(f"Nenhuma operação de {operacao} foi realizada.")
