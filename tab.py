@@ -1,6 +1,8 @@
+import json
+
 class BTreeNode:
     def __init__(self, t):
-        self.t = t  # Mínimo grau (defines the range for number of keys)
+        self.t = t  # Mínimo grau (define o intervalo para o número de chaves)
         self.keys = []
         self.children = []
         self.leaf = True
@@ -73,10 +75,14 @@ class BTree:
             s.insert_non_full(k)
         else:
             root.insert_non_full(k)
+        self.save_tree()
 
     def delete(self, k):
         if self.root:
-            return self.root.delete(k)
+            result = self.root.delete(k)
+            if result:
+                self.save_tree()
+            return result
         return False
 
     def find(self, k):
@@ -94,8 +100,39 @@ class BTree:
     def print_tree(self, node=None, level=0):
         if node is None:
             node = self.root
-        print("Level", level, " ", len(node.keys), ":", node.keys)
+        print("Nível", level, " ", len(node.keys), ":", node.keys)
         level += 1
         if len(node.children) > 0:
             for child in node.children:
                 self.print_tree(child, level)
+
+    def save_tree(self):
+        # Converte a estrutura da árvore para um dicionário
+        data = self._node_to_dict(self.root)
+        # Salva o dicionário em um arquivo JSON
+        with open('btree.json', 'w') as f:
+            json.dump(data, f)
+
+    def load_tree(self):
+        try:
+            with open('btree.json', 'r') as f:
+                data = json.load(f)
+                self.root = self._dict_to_node(data)
+        except FileNotFoundError:
+            pass
+
+    def _node_to_dict(self, node):
+        node_dict = {
+            't': node.t,
+            'keys': node.keys,
+            'leaf': node.leaf,
+            'children': [self._node_to_dict(child) for child in node.children] if not node.leaf else []
+        }
+        return node_dict
+
+    def _dict_to_node(self, node_dict):
+        node = BTreeNode(node_dict['t'])
+        node.keys = node_dict['keys']
+        node.leaf = node_dict['leaf']
+        node.children = [self._dict_to_node(child) for child in node_dict['children']] if not node.leaf else []
+        return node

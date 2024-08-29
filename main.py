@@ -13,6 +13,7 @@ def menu():
 def main():
     grau = int(input("Informe o grau mínimo da Árvore B: "))
     arvore = BTree(grau)
+    arvore.load_tree()
     
     while True:
         opcao = menu()
