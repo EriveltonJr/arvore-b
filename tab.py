@@ -40,22 +40,32 @@ class BTreeNode:
         Insere registro em nó não cheio.
         """
         i = len(self.registros) - 1
-        
+
         if self.leaf:
-            self.registros.append(None)  # Cria espaço para novo registro
+            # Adiciona um espaço para o novo registro e desloca os existentes
+            self.registros.append(None)
             while i >= 0 and registro < self.registros[i]:
-                self.registros[i + 1] = self.registros[i]  # Desloca registros para inserir novo
+                self.registros[i + 1] = self.registros[i]
                 i -= 1
-            self.registros[i + 1] = registro  # Insere novo registro na posição correta
+            self.registros[i + 1] = registro
         else:
+            # Encontra o filho apropriado para descer
             while i >= 0 and registro.id < self.registros[i].id:
                 i -= 1
             i += 1
-            if len(self.children[i].registros) == 1:  # Verifica se filho está cheio
+
+            # Certifique-se de que estamos dentro dos limites dos filhos
+            if i >= len(self.children):
+                i = len(self.children) - 1  # Ajusta o índice para o último filho disponível
+
+            if len(self.children[i].registros) == 2 * self.t - 1:
                 self.split_child(i)
                 if registro.id > self.registros[i].id:
                     i += 1
-            self.children[i].insert_non_full(registro)  # Insere no filho adequado
+                if i >= len(self.children):
+                    i = len(self.children) - 1  # Reajusta o índice novamente após a divisão
+
+            self.children[i].insert_non_full(registro)
 
     def split_child(self, i):
         """
@@ -64,12 +74,15 @@ class BTreeNode:
         y = self.children[i]
         z = BTreeNode(y.t)
         z.leaf = y.leaf
-        self.children.insert(i + 1, z)  # Adiciona novo nó filho
-        self.registros.insert(i, y.registros[0])  # Move registro do meio para o nó pai
+        z.registros = y.registros[y.t:]  # Move a metade superior dos registros para z
+        y.registros = y.registros[:y.t-1]  # Mantém a metade inferior dos registros em y
+
         if not y.leaf:
-            z.children = y.children[1:]  # Atribui filhos ao novo nó
-            y.children = y.children[:1]  # Mantém um filho no nó original
-        y.registros = [y.registros[0]]  # Mantém um registro no nó original
+            z.children = y.children[y.t:]  # Move os filhos correspondentes para z
+            y.children = y.children[:y.t]  # Mantém os filhos correspondentes em y
+
+        self.children.insert(i + 1, z)  # Insere z como filho do nó atual
+        self.registros.insert(i, y.registros.pop())  # Move o registro do meio para o nó pai
 
     def search(self, id):
         """
@@ -78,11 +91,15 @@ class BTreeNode:
         i = 0
         while i < len(self.registros) and id > self.registros[i].id:
             i += 1
+
         if i < len(self.registros) and id == self.registros[i].id:
             return self.registros[i]  # Retorna registro encontrado
         elif self.leaf:
             return None  # Retorna None se não encontrado
         else:
+            # Garante que o índice `i` não ultrapasse o número de filhos
+            if i >= len(self.children):
+                return None
             return self.children[i].search(id)  # Continua busca no filho
 
     def update(self, id, nome, idade):
@@ -245,7 +262,7 @@ class BTree:
 
         registro = Registro(id, nome, idade)
         root = self.root
-        if len(root.registros) == 1:  # Verifica se a raiz está cheia
+        if len(root.registros) == 2 * self.t - 1:  # Verifica se a raiz está cheia
             temp = BTreeNode(self.t)
             temp.children.insert(0, root)
             temp.leaf = False
