@@ -103,22 +103,29 @@ class BTreeNode:
             return self.children[i].search(id)  # Continua busca no filho
 
     def update(self, id, nome, idade):
-        """
-        Atualiza um registro existente pelo ID.
-        """
         i = 0
+        # Procurar a posição onde o ID pode estar ou continuar a busca
         while i < len(self.registros) and id > self.registros[i].id:
             i += 1
         
-        if i < len(self.registros) and id == self.registros[i].id:
-            self.registros[i].nome = nome  # Atualiza nome do registro
-            self.registros[i].idade = idade  # Atualiza idade do registro
+        # Se o ID for encontrado no nó atual
+        if i < len(self.registros) and self.registros[i].id == id:
+            # Atualizar o registro correspondente
+            self.registros[i].nome = nome
+            self.registros[i].idade = idade
             return True
         
-        if self.leaf:
-            return False  # Retorna False se não encontrado
+        # Se o nó não é folha, continuar a busca nos filhos
+        if not self.leaf:
+            if i < len(self.children):
+                return self.children[i].update(id, nome, idade)
+            else:
+                print(f"Erro: Tentativa de acessar filho inválido em {i}.")
+                return False
         else:
-            return self.children[i].update(id, nome, idade)  # Continua atualização no filho
+            # Se o nó é folha e o ID não foi encontrado
+            print("Erro: ID não encontrado.")
+            return False
 
     def remove(self, id, t):
         """
@@ -129,21 +136,23 @@ class BTreeNode:
             i += 1
         
         if i < len(self.registros) and id == self.registros[i].id:
+            print(f"{id}")  # Exibe apenas o ID do registro que será removido
             if self.leaf:
                 self.registros.pop(i)  # Remove registro de uma folha
             else:
                 self._remove_internal_node(i, t)  # Remove registro de nó interno
         elif self.leaf:
-            print(f"Erro: Registro com ID {id} não existe.")  # Mensagem de erro se não encontrado
+            print(f"Erro: Registro com ID {id} não encontrado. Escolha um ID existente.")  # Mensagem de erro se não encontrado
             return  # Não faz nada se não encontrado
         else:
-            if len(self.children[i].registros) < t:
-                self._fill(i, t)  # Garante que filho tenha registros suficientes
-            if i > len(self.registros):
-                self.children[i - 1].remove(id, t)  # Continua remoção no filho à esquerda
+            # Verificar se o índice `i` é válido antes de tentar acessar `self.children[i]`
+            if i < len(self.children):
+                if len(self.children[i].registros) < t:
+                    self._fill(i, t)  # Garante que filho tenha registros suficientes
+                self.children[i].remove(id, t)  # Continua remoção no filho
             else:
-                self.children[i].remove(id, t)  # Continua remoção no filho à direita
-                
+                print(f"Erro: Registro com ID {id} não encontrado. Escolha um ID existente.")  # Mensagem de erro se o índice não for válido
+
     def _remove_internal_node(self, i, t):
         """
         Remove um registro de um nó interno.
