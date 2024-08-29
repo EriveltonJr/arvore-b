@@ -117,6 +117,7 @@ class BTreeNode:
             else:
                 self._remove_internal_node(i, t)  # Remove registro de nó interno
         elif self.leaf:
+            print(f"Erro: Registro com ID {id} não existe.")  # Mensagem de erro se não encontrado
             return  # Não faz nada se não encontrado
         else:
             if len(self.children[i].registros) < t:
@@ -125,6 +126,72 @@ class BTreeNode:
                 self.children[i - 1].remove(id, t)  # Continua remoção no filho à esquerda
             else:
                 self.children[i].remove(id, t)  # Continua remoção no filho à direita
+                
+    def _remove_internal_node(self, i, t):
+        """
+        Remove um registro de um nó interno.
+        """
+        registro = self.registros[i]
+
+        # Se o filho anterior (à esquerda) tem pelo menos t registros, encontre o predecessor.
+        if len(self.children[i].registros) >= t:
+            pred = self._get_predecessor(i)
+            self.registros[i] = pred
+            self.children[i].remove(pred.id, t)
+        
+        # Se o filho seguinte (à direita) tem pelo menos t registros, encontre o sucessor.
+        elif i + 1 < len(self.children) and len(self.children[i + 1].registros) >= t:
+            succ = self._get_sucessor(i)
+            self.registros[i] = succ
+            self.children[i + 1].remove(succ.id, t)
+        
+        # Se ambos os filhos têm menos de t registros, fundir os filhos e remover o registro.
+        else:
+            if i < len(self.children) - 1:
+                self._merge(i)
+                self.children[i].remove(registro.id, t)
+            else:
+                self._merge(i - 1)
+                self.children[i - 1].remove(registro.id, t)
+
+    def _get_predecessor(self, i):
+        """
+        Obtém o predecessor de um registro no índice i.
+        """
+        current = self.children[i]
+        while not current.leaf:
+            current = current.children[-1]
+        return current.registros[-1]
+
+    def _get_sucessor(self, i):
+        """
+        Obtém o sucessor de um registro no índice i.
+        """
+        current = self.children[i + 1]
+        while not current.leaf:
+            current = current.children[0]
+        return current.registros[0]
+
+    def _merge(self, i):
+        """
+        Funde dois filhos e um registro do nó pai.
+        """
+        child = self.children[i]
+        sibling = self.children[i + 1]
+
+        # Puxar o registro do meio do pai para o filho
+        child.registros.append(self.registros[i])
+
+        # Adicionar os registros do irmão ao filho
+        child.registros.extend(sibling.registros)
+
+        # Adicionar os filhos do irmão ao filho (se houver)
+        if not child.leaf:
+            child.children.extend(sibling.children)
+
+        # Remover o registro do meio do pai e o ponteiro do irmão
+        self.registros.pop(i)
+        self.children.pop(i + 1)
 
     def print_table(self, level=0, indent=""):
         """
@@ -172,6 +239,10 @@ class BTree:
         """
         Insere um novo registro na árvore.
         """
+        if self.search(id) is not None:
+            print(f"Erro: Já existe um registro com o ID {id}.")
+            return
+
         registro = Registro(id, nome, idade)
         root = self.root
         if len(root.registros) == 1:  # Verifica se a raiz está cheia
@@ -187,6 +258,8 @@ class BTree:
         else:
             root.insert_non_full(registro)  # Insere diretamente na raiz
 
+        self.save_to_file()  # Salva a árvore após a inserção
+
     def search(self, id):
         """
         Busca um registro na árvore.
@@ -197,18 +270,30 @@ class BTree:
         """
         Atualiza um registro na árvore.
         """
-        return self.root.update(id, nome, idade)  # Atualiza a partir da raiz
+        if self.root.update(id, nome, idade):  # Atualiza a partir da raiz
+            self.save_to_file()  # Salva a árvore após a atualização
+        else:
+            print(f"Erro: Registro com ID {id} não encontrado.")
 
     def remove(self, id):
         """
         Remove um registro da árvore.
         """
-        self.root.remove(id, self.t)
-        if len(self.root.registros) == 0:  # Verifica se a raiz está vazia
-            if not self.root.leaf:
-                self.root = self.root.children[0]  # A raiz se torna o filho
+        if self.root:
+            original_size = len(self.root.registros)
+            self.root.remove(id, self.t)
+            if len(self.root.registros) < original_size:
+                self.save_to_file()  # Salva a árvore após a remoção
             else:
-                self.root = None  # A árvore fica vazia
+                print(f"Erro: Registro com ID {id} não encontrado.")
+            
+            if len(self.root.registros) == 0:  # Verifica se a raiz está vazia
+                if not self.root.leaf:
+                    self.root = self.root.children[0]  # A raiz se torna o filho
+                else:
+                    self.root = None  # A árvore fica vazia
+        else:
+            print(f"Erro: Registro com ID {id} não encontrado.")
 
     def print_table(self):
         """
@@ -236,3 +321,6 @@ class BTree:
                 self.root = BTreeNode.from_dict(data, self.t)
         except FileNotFoundError:
             print("Arquivo de dados não encontrado.")  # Mensagem se o arquivo não existir
+        except json.JSONDecodeError:
+            print("Erro ao ler o arquivo de dados. Iniciando com uma árvore vazia.")
+            self.root = BTreeNode(self.t)  # Inicializa com uma árvore vazia

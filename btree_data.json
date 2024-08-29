@@ -1,8 +1,8 @@
 {
     "registros": [
         {
-            "id": 1,
-            "nome": "Artur",
+            "id": 2,
+            "nome": "Maria Em\u00edlia",
             "idade": 20
         }
     ],
@@ -11,58 +11,17 @@
             "registros": [
                 {
                     "id": 1,
-                    "nome": "Erivelton",
-                    "idade": 20
-                }
-            ],
-            "children": [
-                {
-                    "registros": [
-                        {
-                            "id": 1,
-                            "nome": "Erivelton",
-                            "idade": 20
-                        }
-                    ],
-                    "children": [],
-                    "leaf": true
-                }
-            ],
-            "leaf": false
-        },
-        {
-            "registros": [
-                {
-                    "id": 2,
-                    "nome": "Maria Em\u00edlia",
-                    "idade": 20
-                }
-            ],
-            "children": [
-                {
-                    "registros": [
-                        {
-                            "id": 2,
-                            "nome": "Maria Em\u00edlia",
-                            "idade": 20
-                        }
-                    ],
-                    "children": [],
-                    "leaf": true
+                    "nome": "Artur",
+                    "idade": 23
                 },
                 {
-                    "registros": [
-                        {
-                            "id": 3,
-                            "nome": "Rodrigo",
-                            "idade": 21
-                        }
-                    ],
-                    "children": [],
-                    "leaf": true
+                    "id": 3,
+                    "nome": "Rodrigo",
+                    "idade": 21
                 }
             ],
-            "leaf": false
+            "children": [],
+            "leaf": true
         }
     ],
     "leaf": false
