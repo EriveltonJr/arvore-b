@@ -1,12 +1,15 @@
 import json
 
+# Classe que representa um nó da árvore B.
 class BTreeNode:
+# Inicializa um nó da árvore B, definindo o grau mínimo e configurando o nó como folha inicialmente.
     def __init__(self, t):
         self.t = t  # Mínimo grau (define o intervalo para o número de chaves)
         self.keys = []
         self.children = []
         self.leaf = True
 
+# Método que divide um nó filho que está cheio, redistribuindo as chaves e promovendo uma chave ao nó pai.
     def split_child(self, i, y):
         t = self.t
         z = BTreeNode(y.t)
@@ -19,6 +22,7 @@ class BTreeNode:
         self.children.insert(i + 1, z)
         self.keys.insert(i, y.keys.pop(-1))
 
+# Insere uma nova chave em um nó que não está cheio, utilizando recursão para descer na árvore até encontrar o local correto.
     def insert_non_full(self, k):
         if self.leaf:
             self.keys.append(k)
@@ -59,11 +63,14 @@ class BTreeNode:
             i += 1
         return self.children[i].find(k)
 
+# Classe que representa a própria árvore B e gerencia as operações principais como inserção, remoção, busca, etc.
 class BTree:
+# Inicializa um nó da árvore B, definindo o grau mínimo e configurando o nó como folha inicialmente.
     def __init__(self, t):
         self.root = BTreeNode(t)
         self.t = t
 
+# Método principal de inserção que verifica se a raiz está cheia e, se necessário, cria uma nova raiz e divide o nó.
     def insert(self, k):
         root = self.root
         if len(root.keys) == 2 * self.t - 1:
@@ -106,6 +113,7 @@ class BTree:
             for child in node.children:
                 self.print_tree(child, level)
 
+# Salva o estado atual da árvore B em um arquivo JSON, garantindo persistência dos dados.
     def save_tree(self):
         # Converte a estrutura da árvore para um dicionário
         data = self._node_to_dict(self.root)
@@ -113,6 +121,7 @@ class BTree:
         with open('btree.json', 'w') as f:
             json.dump(data, f)
 
+# Carrega a árvore B a partir de um arquivo JSON, se disponível, para persistir dados entre execuções.
     def load_tree(self):
         try:
             with open('btree.json', 'r') as f:

@@ -1,5 +1,6 @@
 from tab import BTree
 
+# Função que exibe o menu principal de opções para o usuário.
 def menu():
     print("\nMenu:")
     print("1. Inserir")
@@ -10,7 +11,9 @@ def menu():
     print("6. Sair")
     return input("Escolha uma opção: ")
 
+# Função principal que inicializa a árvore B e controla o fluxo do programa.
 def main():
+# Define o grau mínimo da árvore B com base na entrada do usuário.
     grau = int(input("Informe o grau mínimo da Árvore B: "))
     arvore = BTree(grau)
     arvore.load_tree()
@@ -18,6 +21,7 @@ def main():
     while True:
         opcao = menu()
         
+# Processa a inserção de um novo valor na árvore B.
         if opcao == "1":
             chave = int(input("Informe a chave a ser inserida: "))
             arvore.insert(chave)
@@ -54,3 +58,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
