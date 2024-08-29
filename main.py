@@ -1,61 +1,141 @@
+import time
+import tracemalloc
 from tab import BTree
 
-# Função que exibe o menu principal de opções para o usuário.
-def menu():
-    print("\nMenu:")
-    print("1. Inserir")
-    print("2. Buscar")
-    print("3. Atualizar")
-    print("4. Remover")
-    print("5. Imprimir Árvore")
-    print("6. Sair")
-    return input("Escolha uma opção: ")
+def medir_tempo(func):
+    """Decorator para medir o tempo de execução de uma função em milissegundos."""
+    def wrapper(*args, **kwargs):
+        inicio = time.time()
+        resultado = func(*args, **kwargs)
+        fim = time.time()
+        tempo_execucao = (fim - inicio) * 1000  # Convertendo para milissegundos
+        return resultado, tempo_execucao
+    return wrapper
 
-# Função principal que inicializa a árvore B e controla o fluxo do programa.
+@medir_tempo
+def inserir_registro(btree, id, nome, idade):
+    btree.insert(id, nome, idade)
+
+@medir_tempo
+def buscar_registro(btree, id):
+    return btree.search(id)
+
+@medir_tempo
+def atualizar_registro(btree, id, nome, idade):
+    return btree.update(id, nome, idade)
+
+@medir_tempo
+def remover_registro(btree, id):
+    return btree.remove(id)
+
 def main():
-# Define o grau mínimo da árvore B com base na entrada do usuário.
-    grau = int(input("Informe o grau mínimo da Árvore B: "))
-    arvore = BTree(grau)
-    arvore.load_tree()
-    
+    ordem = 2
+    btree = BTree(ordem)
+    btree.load_from_file()  # Carrega os dados do arquivo ao iniciar o programa
+
+    tempos_execucao = {
+        "inserir": [],
+        "buscar": [],
+        "atualizar": [],
+        "remover": []
+    }
+
+    tracemalloc.start()  # Inicia a medição do consumo de memória
+
     while True:
-        opcao = menu()
+        print("\nMenu de Operações:")
+        opcoes = [
+            "1. Inserir registro",
+            "2. Buscar registro",
+            "3. Atualizar registro",
+            "4. Remover registro",
+            "5. Exibir tabela",
+            "6. Sair"
+        ]
+
+        # Utilizando for para exibir as opções do menu
+        for opcao in opcoes:
+            print(opcao)
         
-# Processa a inserção de um novo valor na árvore B.
-        if opcao == "1":
-            chave = int(input("Informe a chave a ser inserida: "))
-            arvore.insert(chave)
-            print(f"Chave {chave} inserida.")
-            
-        elif opcao == "2":
-            chave = int(input("Informe a chave a ser buscada: "))
-            if arvore.find(chave):
-                print(f"Chave {chave} encontrada.")
-            else:
-                print(f"Chave {chave} não encontrada.")
-        
-        elif opcao == "3":
-            chave_antiga = int(input("Informe a chave a ser atualizada: "))
-            chave_nova = int(input("Informe a nova chave: "))
-            arvore.update(chave_antiga, chave_nova)
-        
-        elif opcao == "4":
-            chave = int(input("Informe a chave a ser removida: "))
-            if arvore.delete(chave):
-                print(f"Chave {chave} removida.")
-            else:
-                print(f"Chave {chave} não encontrada.")
-        
-        elif opcao == "5":
-            arvore.print_tree()
-        
-        elif opcao == "6":
-            print("Saindo...")
+        escolha = input("Escolha uma operação (1-6): ")
+
+        if escolha == '1':
+            while True:
+                id = int(input("Digite o ID: "))
+                nome = input("Digite o nome: ")
+                idade = int(input("Digite a idade: "))
+                _, tempo_execucao = inserir_registro(btree, id, nome, idade)
+                tempos_execucao["inserir"].append(tempo_execucao)
+                print(f"Registro {id} inserido com sucesso. Tempo de execução: {tempo_execucao:.6f} ms")
+                continuar = input("Deseja inserir outro registro? (s/n): ")
+                if continuar.lower() != 's':
+                    break
+
+        elif escolha == '2':
+            while True:
+                id = int(input("Digite o ID a ser buscado: "))
+                resultado, tempo_execucao = buscar_registro(btree, id)
+                tempos_execucao["buscar"].append(tempo_execucao)
+                if resultado:
+                    print(f"Registro encontrado: {resultado}. Tempo de execução: {tempo_execucao:.6f} ms")
+                else:
+                    print(f"Registro com ID {id} não encontrado. Tempo de execução: {tempo_execucao:.6f} ms")
+                continuar = input("Deseja buscar outro registro? (s/n): ")
+                if continuar.lower() != 's':
+                    break
+
+        elif escolha == '3':
+            while True:
+                id = int(input("Digite o ID do registro a ser atualizado: "))
+                nome = input("Digite o novo nome: ")
+                idade = int(input("Digite a nova idade: "))
+                sucesso, tempo_execucao = atualizar_registro(btree, id, nome, idade)
+                tempos_execucao["atualizar"].append(tempo_execucao)
+                if sucesso:
+                    print(f"Registro {id} atualizado com sucesso. Tempo de execução: {tempo_execucao:.6f} ms")
+                else:
+                    print(f"Erro ao atualizar o registro com ID {id}. Tempo de execução: {tempo_execucao:.6f} ms")
+                continuar = input("Deseja atualizar outro registro? (s/n): ")
+                if continuar.lower() != 's':
+                    break
+
+        elif escolha == '4':
+            while True:
+                id = int(input("Digite o ID do registro a ser removido: "))
+                _, tempo_execucao = remover_registro(btree, id)
+                tempos_execucao["remover"].append(tempo_execucao)
+                print(f"Registro {id} removido com sucesso. Tempo de execução: {tempo_execucao:.6f} ms")
+                continuar = input("Deseja remover outro registro? (s/n): ")
+                if continuar.lower() != 's':
+                    break
+
+        elif escolha == '5':
+            print("Tabela atual:")
+            btree.print_table()
+
+        elif escolha == '6':
+            print("Encerrando o programa.")
+            btree.save_to_file()  # Salva os dados no arquivo ao encerrar o programa
+
+            # Exibe o relatório de desempenho
+            print("\nRelatório de Desempenho:")
+            for operacao, tempos in tempos_execucao.items():
+                if tempos:
+                    media_tempo = sum(tempos) / len(tempos)
+                    print(f"Tempo médio para {operacao}: {media_tempo:.6f} ms")
+                else:
+                    print(f"Nenhuma operação de {operacao} foi realizada.")
+
+            # Consumo de memória
+            memoria_atual, memoria_pico = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            print(f"Memória atual usada: {memoria_atual / 1024:.2f} KB")
+            print(f"Pico de memória usada: {memoria_pico / 1024:.2f} KB")
+
             break
-        
+
         else:
-            print("Opção inválida! Tente novamente.")
+            print("Escolha inválida! Por favor, selecione uma opção válida.")
 
 if __name__ == "__main__":
     main()
-    
