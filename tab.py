@@ -296,10 +296,29 @@ class BTree:
         """
         Atualiza um registro na árvore.
         """
-        if self.root.update(id, nome, idade):  # Atualiza a partir da raiz
-            self.save_to_file()  # Salva a árvore após a atualização
-        else:
+        registro_atual = self.search(id)
+        
+        if registro_atual is None:
             print(f"Erro: Registro com ID {id} não encontrado.")
+            return
+
+        print(f"Registro encontrado: {registro_atual}")
+        
+        novo_id = int(input("Digite o novo ID para o registro: "))
+        
+        # Verifica se o novo ID já existe
+        if novo_id != id and self.search(novo_id) is not None:
+            print(f"Erro: Já existe um registro com o ID {novo_id}.")
+            return
+        
+        # Remover o registro antigo
+        self.remove(id)
+        
+        # Inserir o registro com o novo ID
+        self.insert(novo_id, nome, idade)
+
+        print(f"Registro com ID {id} atualizado para ID {novo_id}.")
+        self.save_to_file()  # Salva a árvore após a atualização
 
     def remove(self, id):
         """
